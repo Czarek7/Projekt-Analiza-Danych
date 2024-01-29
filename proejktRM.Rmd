@@ -30,7 +30,7 @@ options(width = 150)
 Celem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
 
 ## Baza danych
-Podstawą analizy jest baza danych klientów firmy pożyczkowej.
+Podstawą analizy jest baza danych klientów firmy pożyczkowej.x
 
 ```{r}
 # wczytanie danych
