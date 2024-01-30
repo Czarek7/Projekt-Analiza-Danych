@@ -27,10 +27,10 @@ options(width = 150)
 
 # Wstęp
 ## Opis problemu
-xCelem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
+Celem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
 
 ## Baza danych
-Podstawą analizy jest baza danych klientów firmy pożyczkowej.x
+Podstawą analizy jest baza danych klientów firmy pożyczkowej.
 
 ```{r}
 # wczytanie danych
@@ -79,16 +79,19 @@ dane <- dane %>%
   mutate(Total_income_by_one = (ApplicantIncome + CoapplicantIncome)/2)
 ```
 
-
-# Analiza eksploracyjna
-Rozpoczynamy od analizy struktury poszczególnych zmiennych. Dla zmiennych jakościowych sporządzamy wykres słupkowy rozkładu procentowego, dla zmiennych ilościowych obliczamy podstawowe miary rozkładu i sporządzamy histogram.
-
-## Loan Status
-Zmienna `Loan_Status` to zmienna jakościowa wyrażona na skali nominalnej.
+## Usunięcie N/A 
 
 ```{r}
-# wykres słupkowy dla zmiennej Loan_Status
-tab <- as.data.frame(100*prop.table(table(dane$Loan_Status)))
+dane_na <- na.omit(dane)
+```
+
+# Wizualizacja danych
+
+
+## Czy otrzymał pożyczkę?
+
+```{r}
+tab <- as.data.frame(100*prop.table(table(dane_na$Loan_Status)))
 ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
   geom_text(aes(label = paste0(round(Freq,1),"%")), 
@@ -97,19 +100,15 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Loan Status",
+  labs(title = "Czy otrzymał pożyczkę?",
        y = "%")
 ```
 
 W badanej grupie klientów firmy znalazło się aż 68,7% osób z przyznaną pożyczką. Decyzję odmowną uzyskało 31,3% z nich.
 
-Dla wszystkich jakościowych zmiennych objaśniających sporządza się analogiczny wykres. Aby nie tworzyć osobnego dla każdej z nich, a tym samym nie mnożyć ich ilości, sporządzimy jeden łączny.
-
-# Jakościowe zmienne objaśniające
-
-```{r, echo = FALSE}
-# wykres słupkowy dla zmiennej Gender
-tab <- as.data.frame(100*prop.table(table(dane$Gender)))
+## Płeć
+```{r}
+tab <- as.data.frame(100*prop.table(table(dane_na$Gender)))
 plot1 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
   geom_text(aes(label = paste0(round(Freq,1),"%")), 
@@ -118,10 +117,14 @@ plot1 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Gender",
+  labs(title = "Płeć",
        y = "%")
+grid.arrange(plot1)
+```
+Główną część wnioskujących stanowią mężczyźni i stanowią prawie 80% wnioskująych. 
 
-# wykres słupkowy dla zmiennej Married
+## Status związku
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Married)))
 plot2 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -131,10 +134,16 @@ plot2 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Married",
+  labs(title = "Małżeństwo",
        y = "%")
 
-# wykres słupkowy dla zmiennej Dependents
+grid.arrange(plot2)
+```
+
+Wiekszość osób wnioskujących to osoby w związku małżeńskim.
+
+## Ilość osób na utrzymaniu
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Dependents)))
 plot3 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -144,10 +153,16 @@ plot3 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Dependents",
+  labs(title = "Ilość osób na utrzymaniu",
        y = "%")
 
-# wykres słupkowy dla zmiennej Education
+grid.arrange(plot3)
+```
+
+Znacząca wiekszość wnioskujących to osobne nie posiadające osób na utrzymaniu, przeszło 55,8%.
+
+## Poziom edukacji
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Education)))
 plot4 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -157,10 +172,16 @@ plot4 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Education",
+  labs(title = "Poziom edukacji",
        y = "%")
 
-# wykres słupkowy dla zmiennej Self_Employed
+grid.arrange(plot4)
+```
+
+Zdecydowana większość osób to osoby wykształcone, w przynajmniej podstawowym stopniu.
+
+## Osoby na samozatrudnieniu 
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Self_Employed)))
 plot5 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -170,10 +191,16 @@ plot5 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Self Employed",
+  labs(title = "Samozatrudniene",
        y = "%")
 
-# wykres słupkowy dla zmiennej Credit_History
+grid.arrange(plot5)
+```
+
+Zaledwie 13% osób jest na samozatrudnieniu.
+
+## Historia kredytowa 
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Credit_History)))
 plot6 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -183,10 +210,16 @@ plot6 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Credit History",
+  labs(title = "Historia kredytowa",
        y = "%")
 
-# wykres słupkowy dla zmiennej Property_Area
+grid.arrange(plot6)
+```
+
+85% to osoby posiadające historię kredytową.
+
+## Lokalizacja 
+```{r}
 tab <- as.data.frame(100*prop.table(table(dane$Property_Area)))
 plot7 <- ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -196,16 +229,46 @@ plot7 <- ggplot(tab, aes(x = Var1, y = Freq)) +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Property Area",
+  labs(title = "Lokalizacja",
        y = "%")
 
-# wykres wspólny
-grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, plot7, nrow = 3)
+grid.arrange(plot7)
 ```
 
-W przypadku historii kredytowej nie mamy zaetykietowanych odpowiedzi, ale najprawdopodobniej oznaczają one 0=no, 1=yes.
+Podział w miarę równy pomiędzy 3 typy lokalizacji. Jednak delikatnie przeważa ilość osób w częsciowo zurbanizowanej lokalizacji.
 
-Poszczególne zmienne cechuje bardzo duża dysproporcja w rozkładach procentowych kategorii.
+
+## Okres spłaty pożyczki
+
+Interesuję nas na jaki okres udzielano pożyczki. 
+
+```{r}
+tab <- as.data.frame(table(dane$Loan_Amount_Term))
+plot1t <- ggplot(tab, aes(x = Var1, y = Freq)) + 
+  geom_col(fill = "#FFFF99", colour = "black") +
+  geom_text(aes(label = paste0(round(Freq, 1), "")), 
+            stat = "identity", size = 4, 
+            fontface = "bold", position = position_stack(vjust = 0.5)) +
+  theme(axis.title.x = element_blank(), 
+        axis.text.x = element_text(colour = "black", size = 10),
+        plot.title = element_text(hjust = 0.5, size = 12)) +
+  labs(title = "Loan Amount Term",
+       y = "")
+print(plot1t)
+```
+
+
+
+
+
+
+
+dotąd przerobione
+
+
+
+
+
 
 # Ilościowe zmienne objaśniające
 Dla ilościowych zmiennych objaśniających obliczamy najpierw podstawowe miary rozkładu.
@@ -253,89 +316,4 @@ grid.arrange(plot1, plot2, plot3, plot4, nrow = 2)
 ```
 
 Rozkłady zmiennych są bardzo nieregularne. W przypadku trzech pierwszych mamy skrajną asymetrię prawostronną (wydłużone ramię z prawej strony histogramu). Dla ostatniej zmiennej asymetria jest lewostronna.
-
-# Klasyfikacja
-Nasza zmienna objaśniana, czyli fakt przyznania pożyczki, to zmienna nominalna o dwóch wariantach odpowiedzi. Do jej przewidywania należy użyć jednej z metod klasyfikacji. Ze względu na specyfikę problemu, dostępne dane, mamy niewielkie pole wyboru, jeśli chodzi o klasyfikator. Zmienne objaśniające to tutaj w większości zmienne jakościowe, więc do klasyfikacji najrozsądniej zastosować **drzewo decyzyjne**. Klasyfikatory takie jak regresja logistyczna, LDA, czy KNN nie znajdą w tym przypadku zastosowania, trzeba by przekodować zmienne przy użyciu kilkunastu zmiennych zero-jedynkowych, uniemożliwiając w praktyce interpretację wyników.
-
-Wykorzystamy wariant ze zbiorem uczącym (70% zbioru obserwacji) i testowym (30%). Dla zapewnienia odtwarzalności wyników ustawiamy ziarno generatora liczb losowych.
-
-```{r}
-# liczba obserwacji 
-n <- nrow(dane)
-
-# ziarno generatora liczb losowych
-set.seed(10101)
-
-# indeksy obserwacji zbioru treningowego (70% całego zbioru danych)
-ind_tren <- sample(1:n, size = 0.7*n, replace = FALSE)
-
-# indeksy obserwacji zbioru testowego
-ind_test <- setdiff(1:n,ind_tren) 
-
-# zbiór treningowy
-trening <- dane[ind_tren,] 
-
-# zbiór testowy
-test <- dane[ind_test,]
-```
-
-Budujemy drzewo decyzyjne na zbiorze uczącym oraz sporządzamy jego wykres.
-
-```{r, warning = F}
-# model 1
-set.seed(10101)
-drzewo <- rpart(Loan_Status ~ ., data = trening, method = "class", control = rpart.control(cp = 0))
-
-# wykres drzewa
-prp(drzewo)
-```
-
-W węzłach mamy pytania o wartości poszczególnych zmiennych objaśniających (czy ta zmienna spełnia wymieniony warunek). Lewa gałąź oznacza spełnienie warunku z węzła (yes), prawa gałąź to jego niespełnienie (no). Jest to drzewo binarne, więc zbiór odpowiedzi jest dzielony w możliwie najlepszy sposób tylko na dwie grupy. W liściach znajdują sie oceny klas (otrzymanie pożyczki lub nie). Mamy uwzględnione tylko istotne zmienne.
-
-Przykładowo dla ścieżki najbardziej na lewo mamy osobę bez historii kredytowej (Credit_History=0 i lewa gałąź oznaczająca "yes"). Osoba taka automatycznie nie uzyskuje pożyczki.
-
-Aby ocenić jakość klasyfikatora wyznaczamy oceny zmiennej zależnej dla wartości zmiennych ze zbioru testowego (który nie brał udziału w budowie drzewa), a następnie porównujemy je z rzeczywistymi etykietami klas dla obserwacji z tego zbioru, wyznaczamy macierz błędu (*confiusion matrix*), czyli tabelę krzyżową ocen i prawdziwych wartosci obserwacji ze zbioru testowego.
-
-```{r}
-# wartości prognozowane dla danych ze zbioru testowego
-oceny <- predict(drzewo, newdata = test, type = "class")
-
-# macierz błędu
-table(przewidywane = oceny, rzeczywiste = test$Loan_Status)
-
-# błąd klasyfikacji
-mean(oceny != test$Loan_Status) 
-```
-
-Na głównej przekątnej mamy obserwacje poprawnie sklasyfikowane, poza nią obserwacje niepoprawnie sklasyfikowane. Błąd klasyfikacji to odsetek przypadków niepoprawnie sklasyfikowanych.
-
-Błąd klasyfikacji wyniósł aż 27%, to właściwie dyskwalifikuje zdudowany klasyfikator. 
-
-Potencjalną poprawę wyników można uzyskać przycinając drzewo. Do przycięcia drzewa wykorzystujemy optymalną wartość CP (*Complexity parameter*), jest to wartość, dla której błąd oparty na walidacji krzyżowej jest najmniejszy.
-
-```{r}
-# optymalne CP
-CP_opt <- drzewo$cptable[which.min(drzewo$cptable[,"xerror"]),"CP"]
-
-# drzewo przycięte
-set.seed(10101)
-drzewo2 <- prune(drzewo, cp = CP_opt)
-
-# wartości prognozowane dla danych ze zbioru testowego
-oceny <- predict(drzewo2, newdata = test, type = "class")
-
-# macierz błędu
-table(przewidywane = oceny, rzeczywiste = test$Loan_Status)
-
-# błąd klasyfikacji
-mean(oceny != test$Loan_Status) 
-```
-
-Błąd spadł to 19,4%.
-
-# Podsumowanie
-Specyfika rozważanego zagadnienia spowodawała, że wybór możliwych do zastosowania metod klasyfikacji okazał się mocno ograniczony. Większość klasyfikatorów, jak choćby LDA, wymaga operowania ilościowymi zmiennymi objaśniającymi. W tym przypadku obserwacje to konkretne osoby, a ludzie opisywani są zazwyczaj cechami jakościowymi, np. płeć, stan cywilny, poziom wykształcenia.
-
-Drzewa decyzyjne są popularną metodą klasyfikacji dzięki łatwości interpretacji wyników danych na wykresie drzewa binarnego. W przypadku bardzo dużych drzew ich czytelność jest niestety ograniczona, stąd konieczność oceny klasyfikatora głównie na podstawie błędu klasyfikacji. Tutaj wyniósł on aż 27%. Nieznaczą poprawę udało się uzyskać dzięki przycięciu drzewa, błąd spadł do 19,4%, jednak nadal jest to wynik daleki od oczekiwanego. 
-
 

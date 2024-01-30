@@ -1,0 +1,4 @@
+"0","dane <- dane %>%"
+"0","  mutate(Total_income = (ApplicantIncome + CoapplicantIncome))"
+"0","dane <- dane %>%"
+"0","  mutate(Total_income_by_one = (ApplicantIncome + CoapplicantIncome)/2)"

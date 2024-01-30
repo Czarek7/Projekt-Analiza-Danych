@@ -1,0 +1,6 @@
+"0","# wczytanie danych"
+"0","sciezka <- ""/Users/czare/Desktop/Analiza Grupa C/pozyczki.csv"""
+"0","dane <- read.csv(sciezka)"
+"0",""
+"0","# wyświetlenie pierwszych wierszy danych"
+"0","kable(head(dane))"
