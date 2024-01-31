@@ -1,3 +1,0 @@
-"0","# usunięcie pierwszej kolumny"
-"0","dane <- dane %>%"
-"0","  select(-1)"
