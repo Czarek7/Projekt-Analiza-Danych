@@ -3,7 +3,7 @@
     "path": "C:/Users/czare/Desktop/Modelowanie/Projekt-Analiza-Danych/proejktRM.Rmd",
     "project_path": "proejktRM.Rmd",
     "type": "r_markdown",
-    "hash": "2530885901",
+    "hash": "3901651687",
     "contents": "",
     "dirty": false,
     "created": 1706648405976.0,
@@ -12,11 +12,12 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "408,0",
-        "scrollLine": "382",
+        "cursorPosition": "400,153",
+        "scrollLine": "386",
         "docOutlineVisible": "0"
     },
     "folds": "",
+<<<<<<< HEAD
 <<<<<<< HEAD:.Rproj.user/121AE3B4/sources/session-1a761d6b/CDDC5491
 <<<<<<< HEAD
     "lastKnownWriteTime": 1706641641,
@@ -26,10 +27,13 @@
 =======
     "lastKnownWriteTime": 1706724734,
 >>>>>>> 8d1b353fb9c2cfe186608b6fbfba64565e793d9c:.Rproj.user/121AE3B4/sources/session-1a761d6b/7DCB4E36
+=======
+    "lastKnownWriteTime": 1706725090,
+>>>>>>> Czarek
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1706724734384,
+    "last_content_update": 1706725090584,
     "read_only": false,
     "read_only_alternatives": []
 }
