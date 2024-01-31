@@ -86,7 +86,6 @@ dane <- dane %>%
 Zmienna `Loan_Status` to zmienna jakościowa wyrażona na skali nominalnej.
 
 ```{r}
-# wykres słupkowy dla zmiennej Loan_Status
 tab <- as.data.frame(100*prop.table(table(dane$Loan_Status)))
 ggplot(tab, aes(x = Var1, y = Freq)) + 
   geom_col(fill = "#FFFF99", colour = "black") +
@@ -99,7 +98,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Decyzja pożyczkowa",
        y = "%")
 ```
-
+Większośc wnioskujących uzyskała pozytywna decyzję pożyczkową, prawie 70%.
 
 ## Płeć
 
@@ -116,21 +115,22 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Płeć",
        y = "%")
 ```
-```{r}
-filtered_data <- dane[dane$Loan_Status == "Y", ]
+Dominującą grupę wnioskujących stanowili mężczyźni. Zaledwie 18% wniosków złożyły kobiety.
 
-tab <- as.data.frame(100*prop.table(table(filtered_data$Gender)))
-ggplot(tab, aes(x = Var1, y = Freq)) + 
-  geom_col(fill = "#FFFF99", colour = "black") +
-  geom_text(aes(label = paste0(round(Freq,1),"%")), 
-            stat = "identity", size = 4, 
-            fontface = "bold", position = position_stack(vjust = 0.5)) +
+```{r}
+
+ggplot(dane, aes(x = Loan_Status, fill = Gender)) +
+  geom_bar(position = "stack") +
+  geom_text(stat = "count", aes(label = ..count.., y = ..count..),
+            position = position_stack(vjust = 0.5), size = 4, fontface = "bold") +
+  scale_fill_manual(values = c("Female" = "red", "Male" = "lightblue")) +
+  labs(title = "Decyzja pożyczkowa a Płeć", y = "Liczba decyzji", x = "Decyzja pożyczkowa", fill = "Płeć") +
   theme(axis.title.x = element_blank(), 
         axis.text.x = element_text(colour = "black", size = 10),
         plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Płeć",
-       y = "%")
+  facet_wrap(~Gender, scales = "free_x")
 ```
+Z wykresu można zaobserwować, że pomimo liczniejszej grupy meżczyzn to oni w większym stopniu dostawali pozytywną decyzję.
 
 ## Małżeństwo
 
