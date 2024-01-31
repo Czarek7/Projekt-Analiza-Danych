@@ -395,13 +395,10 @@ ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term)) +
 ## 
 
 ```{r, warning = FALSE}
-
-# Narysuj dwa wykresy rozrzutu, kategoryzowane przez LoanStatus
 ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
   geom_point() +
   facet_wrap(~Loan_Status, scales = "free") +
   labs(title = "Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową", x = "Wartość pożyczki", y = "Okres pożyczkowania")
-
 ```
 
 
