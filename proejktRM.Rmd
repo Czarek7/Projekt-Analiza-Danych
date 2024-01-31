@@ -377,6 +377,32 @@ ggplot(dane, aes(x = Education, y = LoanAmount, fill = Property_Area)) +
   theme_minimal()
 ```
 
+## Wykres liniowy wartości pożyczki
+```{r, warning = FALSE}
+dane <- dane %>% arrange(LoanAmount)
+
+ggplot(dane, aes(x = seq_along(LoanAmount), y = LoanAmount)) +
+  geom_line(color = "blue") +
+  labs(title = "Wykres liniowy wartości pożyczki", x = "Numer obserwacji", y = "Warrtość pożyczki")
+```
+
+## Wykres rozrzutu długości i wartości pożyczki
+```{r, warning = FALSE}
+ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term)) +
+  geom_point(color = "green") +
+  labs(title = "Wykres rozrzutu Loan Amount i Loan Terms", x = "Loan Amount", y = "Loan Terms")
+```
+## 
+
+```{r, warning = FALSE}
+
+# Narysuj dwa wykresy rozrzutu, kategoryzowane przez LoanStatus
+ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
+  geom_point() +
+  facet_wrap(~Loan_Status, scales = "free") +
+  labs(title = "Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową", x = "Wartość pożyczki", y = "Okres pożyczkowania")
+
+```
 
 
 
