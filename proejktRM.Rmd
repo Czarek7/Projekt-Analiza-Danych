@@ -8,9 +8,8 @@ output: html_document
 ```{r}
 #Instalacja pakietów
 
-install.packages(c("dplyr", "assertive"))
+install.packages("dplyr")
 library(dplyr)
-library(assertive)
 install.packages("ggplot2")
 library(ggplot2)
 install.packages("kable")
