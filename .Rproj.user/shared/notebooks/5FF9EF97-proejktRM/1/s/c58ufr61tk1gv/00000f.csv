@@ -1,4 +1,0 @@
-"0","ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +"
-"0","  geom_point() +"
-"0","  facet_wrap(~Loan_Status, scales = ""free"") +"
-"0","  labs(title = ""Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową"", x = ""Wartość pożyczki"", y = ""Okres pożyczkowania"")"
