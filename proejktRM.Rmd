@@ -4,81 +4,155 @@ author: "Aleksandra, Cezary, Karolina"
 output: html_document
 ---
 
-```{r, include = FALSE}
-# instalacja (jeśli potrzeba) i załadowanie niezbędnych pakietów
-if (!require(knitr)) install.packages("knitr")
-library(knitr)
-if (!require(tidyverse)) install.packages("tidyverse")
-library(tidyverse)
-if (!require(gridExtra)) install.packages("gridExtra")
-library(gridExtra)
-if (!require(psych)) install.packages("psych")
-library(psych)
-if (!require(ipred)) install.packages("ipred")
-library(ipred)
-if (!require(rpart)) install.packages("rpart")
-library(rpart)
-if (!require(rpart.plot)) install.packages("rpart.plot")
-library(rpart.plot)
 
-# szerokość wydruku
-options(width = 150)
+```{r}
+#Instalacja pakietów
+
+install.packages(c("dplyr", "assertive"))
+library(dplyr)
+library(assertive)
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("kable")
+library(kableExtra)
+install.packages("validate")
+library(validate)
+install.packages("assertr")
+library(assertr)
+install.packages("parallel")
+library(parallel)
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("knitr")
+library(knitr)
+install.packages("gridExtra")
+library(gridExtra)
+install.packages("psych")
+library(psych)
+install.packages("ipred")
+library(ipred)
+install.packages("rpart")
+library(rpart)
+install.packages("rpart.plot")
+library(rpart.plot)
 ```
 
 # Wstęp
+
 ## Opis problemu
+
 Celem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
 
 ## Baza danych
+
 Podstawą analizy jest baza danych klientów firmy pożyczkowej.
 
-```{r}
-# wczytanie danych
-sciezka <- "/Users/czare/Desktop/Analiza Grupa C/pozyczki.csv"
-dane <- read.csv(sciezka)
-
-# wyświetlenie pierwszych wierszy danych
-kable(head(dane))
-```
-
-```{r}
-# wyświetlanie danych
+```{r message=TRUE, warning=TRUE, paged.print=TRUE}
+# Wczytanie danych
+pozyczki <- read.csv("pozyczki.csv", na.strings = "")
+dane<-data.frame(pozyczki)
+head(dane[1:13],4)
 str(dane)
 ```
 
-## Zmienne
-Zmienną objaśnianą jest zmienna `Loan_Status` określająca, czy danej osobie przyznano pożyczkę (Y/N).
+# Czyszcznie danych
 
-Zmienne objaśniające to głównie zmienne socjo-demograficzne oraz informacje finansowe.
+## Zmienne
 
 ```{r}
-# nazwy zmiennych objaśniających
+# Nazwy zmiennych objaśniających
 data.frame(zmienna = names(dane)[2:12])
-```
 
-## Czyszczenie dancyh 
+```
 
 Pierwsza kolumna w bazie danych (`Loan_ID`) określa numer identyfikacyjny, ją możemy pominąć.
 
 ```{r}
-# usunięcie pierwszej kolumny
+# Usunięcie pierwszej kolumny i dodatnie kolumny pomocniczej
 dane <- dane %>%
   select(-1)
+dane$TotalIncome <- rowSums(dane[, c("ApplicantIncome", "CoapplicantIncome")], na.rm = TRUE)
+dane <- dane %>%
+  mutate(ID = 1:n())
+
+
+
 ```
 
-Mamy 614 obserwacji (klientów firmy) opisanych przez 12 zmiennych.
+#Walidacja danych
+```{r}
+#Walidacja danych
+rules <- validator(
+  ApplicantIncome + CoapplicantIncome == TotalIncome
+  , Gender %in% c("Male", "Female")
+  , Married %in% c("Yes", "No")
+  , Self_Employed %in% c("Yes", "No")
+  , Loan_Status %in% c("Y", "N")
+  , Credit_History %in% c("0", "1")
+  , LoanAmount >=0
+  , Loan_Amount_Term > 0
+  , ApplicantIncome >= 0
+)
 
-## Dodanie kolumny pomocniczej 
+cf <- confront(dane, rules, key="ID")
+summary(cf)
 
-Dodanie kolumny Total income, która pokazuję dochód dwoch osób składających wniosek. Total income by one, pokazuję dochód całkowity dochód przeliczając na jedną osobę.
+barplot(cf, main="dane")
+
+as.data.frame(cf) %>% head()
+
+```
+Po zwalidowaniu danych nie występują żadne błędy. Można jedynie zauważyć, że w niektórych zmiennych występują braki danych. 
 
 ```{r}
-dane <- dane %>%
-  mutate(Total_income = (ApplicantIncome + CoapplicantIncome))
-dane <- dane %>%
-  mutate(Total_income_by_one = (ApplicantIncome + CoapplicantIncome)/2)
+#Usunięcie wierszy zawierających NA 
+
+dane1 <- na.omit(dane)
+
 ```
 
+Zdecydowaliśmy się na usunięcie wierszy zawierających braki (NA); braki występowały głównie w zmiennych jakościowych. Zastąpienie NA losowymi wartościami mogłoby negatywnie wpłynąć na wynik analizy.
+
+```{r}
+#Brakujące obserwacje 
+sum(is.na(dane1))
+```
+##Obserwacje odstające 
+```{r}
+boxplot(dane1$ApplicantIncome, main="Rozkład Wartości Przychodów Klientów")
+```
+
+```{r}
+boxplot(dane1$LoanAmount, main="Rozkład Wartości Wielkości Kwoty Pożyczki")
+```
+
+```{r}
+plot(dane1$LoanAmount)
+```
+
+```{r}
+boxplot(dane1$LoanAmount ~ dane1$Credit_History, main="Rozkład Wartości wysokości pożyczki w zależności od histori kredytowej'", xlab="Credit_History", ylab="LoanAmount")
+```
+
+```{r}
+boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
+```
+Wielkości całego przychodu dla większości zminnych są w przedziale <44000. Występuje natomiast jedna wartość odstająca, która nas niepokoi i może wplywać negatywnie na wynik analizy. Dla efektywniejszej analizy zdecydowaliśmy się usunąć zmienną odstającą, 
+ID = 410. 
+
+##Usunięcie zmiennej odstającej
+```{r}
+dane1 <- dane1[dane1$ID != 410, ]
+```
+
+```{r}
+boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
+```
+Po usunięciu odstającej zmiennej dane są bardziej spójne.
+
+```{r}
+dane <- dane1
+```
 
 # Wizaulizacja danych
 
@@ -367,7 +441,7 @@ ggplot(dane, aes(x = Loan_Amount_Term)) +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
 ## Wielkość pożyczki osób wykształconych ze względu na lokalizację
-```{r, warning = FALSE}
+```{r warning=FALSE}
 ggplot(dane, aes(x = Education, y = LoanAmount, fill = Property_Area)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Wielkość pożyczki osób wykształconych ze względu na lokalizację",
