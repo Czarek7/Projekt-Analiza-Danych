@@ -3,7 +3,7 @@
     "path": "C:/Users/czare/Desktop/Modelowanie/Projekt-Analiza-Danych/proejktRM.Rmd",
     "project_path": "proejktRM.Rmd",
     "type": "r_markdown",
-    "hash": "2530885901",
+    "hash": "3901651687",
     "contents": "",
     "dirty": false,
     "created": 1706648405976.0,
@@ -12,16 +12,16 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "408,0",
-        "scrollLine": "382",
+        "cursorPosition": "400,153",
+        "scrollLine": "386",
         "docOutlineVisible": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1706724734,
+    "lastKnownWriteTime": 1706724907,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1706724734384,
+    "last_content_update": 1706725066584,
     "read_only": false,
     "read_only_alternatives": []
 }
