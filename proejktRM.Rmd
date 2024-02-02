@@ -93,6 +93,7 @@ barplot(cf, main="dane")
 as.data.frame(cf) %>% head()
 
 ```
+
 Po zwalidowaniu danych nie występują żadne błędy. Można jedynie zauważyć, że w niektórych zmiennych występują braki danych. 
 
 ```{r}
@@ -109,6 +110,7 @@ Zdecydowaliśmy się na usunięcie wierszy zawierających braki (NA); braki wyst
 sum(is.na(dane1))
 ```
 ##Obserwacje odstające 
+
 ```{r}
 boxplot(dane1$ApplicantIncome, main="Rozkład Wartości Przychodów Klientów")
 ```
@@ -128,6 +130,7 @@ boxplot(dane1$LoanAmount ~ dane1$Credit_History, main="Rozkład Wartości wysoko
 ```{r}
 boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
 ```
+
 Wielkości całego przychodu dla większości zminnych są w przedziale <44000. Występuje natomiast jedna wartość odstająca, która nas niepokoi i może wplywać negatywnie na wynik analizy. Dla efektywniejszej analizy zdecydowaliśmy się usunąć zmienną odstającą, 
 ID = 410. 
 
@@ -139,6 +142,7 @@ dane1 <- dane1[dane1$ID != 410, ]
 ```{r}
 boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
 ```
+
 Po usunięciu odstającej zmiennej dane są bardziej spójne.
 
 ```{r}
@@ -148,6 +152,7 @@ dane <- dane1
 # Wizaulizacja danych
 
 ## Decyzja pożyczkowa
+
 Zmienna `Loan_Status` to zmienna jakościowa wyrażona na skali nominalnej.
 
 ```{r}
@@ -163,6 +168,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Decyzja pożyczkowa",
        y = "%")
 ```
+
 Większośc wnioskujących uzyskała pozytywna decyzję pożyczkową, prawie 70%.
 
 ## Płeć
@@ -180,6 +186,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Płeć",
        y = "%")
 ```
+
 Dominującą grupę wnioskujących stanowili mężczyźni. Zaledwie 18% wniosków złożyły kobiety.
 
 ```{r}
@@ -195,6 +202,7 @@ ggplot(dane, aes(x = Loan_Status, fill = Gender)) +
         plot.title = element_text(hjust = 0.5, size = 12)) +
   facet_wrap(~Gender, scales = "free_x")
 ```
+
 Z wykresu można zaobserwować, że pomimo liczniejszej grupy meżczyzn to oni w większym stopniu dostawali pozytywną decyzję.
 
 ## Małżeństwo
@@ -212,7 +220,9 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Małżeństwo",
        y = "%")
 ```
+
 Zdecydowana większość wnioskujących to osoby w związku małżeńskim.
+
 ```{r}
 filtered_data <- dane[dane$Loan_Status == "Y", ]
 
@@ -228,6 +238,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Małżeństwo",
        y = "%")
 ```
+
 Filtrując na osoby, które otrzymały pozytywną decyzję pożyczkowa dominują osoby w związu małżeńskim. Co ciekawe przy filtrze pozytywna decyzja pożyczkowa urósł procent udziału osób w związku małżeńskim co może znaczyć, że osoby z tym statusem z większym prawdopodobieństwem mogą otrzymać pożyczkę.
 
 ## Osoby na utrzymaniu
@@ -245,6 +256,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Oosby na utrzymaniu",
        y = "%")
 ```
+
 Dominującą grupą są osoby, które poza sobą nie mają nikogo na utrzymaniu.
 
 ## Edukacja
@@ -262,6 +274,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Edukacja",
        y = "%")
 ```
+
 Jedynie co 5 wnioskujący nie posiada wykształcenia.
 
 ```{r}
@@ -279,6 +292,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Edukacja",
        y = "%")
 ```
+
 Udział osób nie wykształconych spada jęsli nałożymy filtr pozytywnej oceny kredytowej, co może sugerować, że takie sooby z mniejsyzm prawdopodobieństwem otrzymają pożyczkę.
 
 ## Samozatrudnienie
@@ -312,6 +326,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Historia kredytowa",
        y = "%")
 ```
+
 Jedynie 15% obserwacji nie miało historii kredytowej.
 
 ```{r}
@@ -329,6 +344,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Historia kredytowa",
        y = "%")
 ```
+
 Przy nałożeniu filtru pozytywna ocena zdolności, okazuję się, że zaledwie 1,8% otrzymało pożyczke pomimo braku historii pożyczkowej. Co może sugerować, że brak histori jest ogromna przeszkodą albo zablokowanie szans na pożyczkę.
 
 ## Lokalizacja 
@@ -346,6 +362,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Lokalizacja",
        y = "%")
 ```
+
 Rozkład miejsca zamieszkania jest prawie równy. Jednak najliczniejszą grupę stanowią osoby zamieszkujące tereny semiurbanizowane.
 
 ```{r}
@@ -363,8 +380,8 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Lokalizacja",
        y = "%")
 ```
-Patrząc po osobach z pozytywna decyzją, dominuje grupa osób z terenów semiurbanizowanych.
 
+Patrząc po osobach z pozytywna decyzją, dominuje grupa osób z terenów semiurbanizowanych.
 
 ## Dochód aplikanta
 
@@ -376,8 +393,11 @@ ggplot(dane, aes(x = ApplicantIncome)) +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 
 ```
+
 Większość wnioskujących nie posiada dochodu większego niż 10 000 dolarów. Najliczniejsza grupa nie zarabia nawet 5 000 dolarów.
+
 ## Dochód współaplikanta
+
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = CoapplicantIncome)) + 
   geom_histogram(colour = "black", fill = "#FFFF99", bins = 10) +
@@ -385,9 +405,11 @@ ggplot(dane, aes(x = CoapplicantIncome)) +
        x = "dollars", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
+
 Dochód współwnioskujących najczęściej wynosi 0, co ma swoje przełożenie na tym, że głównie składały osoby nie posiadające nikogo na utrzymaniu.
 
 ## Wartość pożyczki
+
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = LoanAmount)) + 
   geom_histogram(colour = "black", fill = "#FFFF99", bins = 10) +
@@ -395,7 +417,9 @@ ggplot(dane, aes(x = LoanAmount)) +
        x = "dollars", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
+
 Za to wartość pożyczki rzadko kiedy przekraczała 200 dolarów.
+
 ## Okres pożyczkowania
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = Loan_Amount_Term)) + 
@@ -404,6 +428,7 @@ ggplot(dane, aes(x = Loan_Amount_Term)) +
        x = "months", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
+
 Mała grupa osób wnioskowała o pożyczke z okresem płatności dłuższym niż 400 miesiecy.
 
 ## Wykres liniowy wartości pożyczki
@@ -414,6 +439,7 @@ ggplot(dane, aes(x = seq_along(LoanAmount), y = LoanAmount)) +
   geom_line(color = "blue") +
   labs(title = "Wykres liniowy wartości pożyczki", x = "Numer obserwacji", y = "Warrtość pożyczki")
 ```
+
 Wykres ilustruję, że niecałe 20% wniosków stnoapiwły pożyczki o kwocie powyżej 200 dolarów i nie wynosiły więcej niż 600.
 
 ## Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową
@@ -425,7 +451,7 @@ ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
   labs(title = "Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową", x = "Wartość pożyczki", y = "Okres pożyczkowania")
 ```
 
-## Analiza opisowa
+# Analiza opisowa
 
 W kolejnym etapie projektu przeprowadzono analizę opisową danych z firm ubezpieczeniowych, wspartą odpowiednimi grafikami.
 
@@ -512,7 +538,7 @@ Większość osób, które uzyskały kredyt, nie pracuje na własny rachunek. To
 
 Praktycznie wszystkie osoby, które uzyskały kredyt, mają pozytywną historię kredytową. To silne wskazanie na to, że pozytywna historia kredytowa jest kluczowym czynnikiem decydującym o przyznaniu kredytu.
 
-##LoanStatus: No, Statystyki opisowe: ilość występowań dla danej cechy
+## LoanStatus: No, Statystyki opisowe: ilość występowań dla danej cechy
 
 ```{r}
 no_data1 <- dane[dane$Loan_Status == "N", c("Married", "Education","Self_Employed","Credit_History")]
@@ -545,7 +571,7 @@ Większość osób, które nie otrzymały kredytu, nie pracuje na własny rachun
 Wedug danych z tabeli iczba osób z negatywną historią kredytową jest wyższa. Może to wskazywać na to, że historia kredytowa ma wpływ na decyzję o przyznaniu kredytu, ale nie jest jedynym czynnikiem decydującym.
 
 
-##Macierze korelacji
+## Macierze korelacji
 
 
 ```{r}
@@ -588,7 +614,7 @@ ggplot(data = dane, aes(x = Property_Area, fill = Loan_Status)) +
 Według danych z wykresu powyżej, możemy stwierdzić, że na pozytywną decyzję o przyznaniu kredytu, największą i szansę, mają osoby posiadające wykształcenie.
 Możemy również stwierdizć, że największą szansę na otrzymanie kredytu mają osoby mieszkające w strefie półmiejskiej. Mniejsze szanse, na otrzymanie kredytu, utrzymujące się na zbliżonym poziomie, mają osoby zamieszkujące strefy wiejskie i stricte miejskie.
 
-###Testowanie zależności między Loan_Status a Married 
+## Testowanie zależności między Loan_Status a Married 
 
 
 ```{r}
