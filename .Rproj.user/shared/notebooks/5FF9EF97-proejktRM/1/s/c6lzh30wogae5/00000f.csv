@@ -1,0 +1,7 @@
+"0","ggplot(dane, aes(x = Education, y = LoanAmount, fill = Property_Area)) +"
+"0","  geom_bar(stat = ""identity"", position = ""dodge"") +"
+"0","  labs(title = ""Wielkość pożyczki osób wykształconych ze względu na lokalizację"","
+"0","       x = ""Edukacja"","
+"0","       y = ""Wartość pożyczki"","
+"0","       fill = ""Lokalizacja"") +"
+"0","  theme_minimal()"
