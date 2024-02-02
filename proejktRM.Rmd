@@ -110,6 +110,7 @@ Zdecydowaliśmy się na usunięcie wierszy zawierających braki (NA); braki wyst
 sum(is.na(dane1))
 ```
 ##Obserwacje odstające 
+
 ```{r}
 boxplot(dane1$ApplicantIncome, main="Rozkład Wartości Przychodów Klientów")
 ```
