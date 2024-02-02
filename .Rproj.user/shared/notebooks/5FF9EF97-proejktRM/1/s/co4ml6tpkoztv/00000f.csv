@@ -1,0 +1,5 @@
+"0","ggplot(dane, aes(x = LoanAmount)) + "
+"0","  geom_histogram(colour = ""black"", fill = ""#FFFF99"", bins = 10) +"
+"0","  labs(title = ""Wartość pożyczki"", "
+"0","       x = ""dollars"", y = ""n"") +"
+"0","  theme(plot.title = element_text(hjust = 0.5, size = 12))"

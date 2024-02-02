@@ -4,155 +4,81 @@ author: "Aleksandra, Cezary, Karolina"
 output: html_document
 ---
 
-
-```{r}
-#Instalacja pakietów
-
-install.packages(c("dplyr", "assertive"))
-library(dplyr)
-library(assertive)
-install.packages("ggplot2")
-library(ggplot2)
-install.packages("kable")
-library(kableExtra)
-install.packages("validate")
-library(validate)
-install.packages("assertr")
-library(assertr)
-install.packages("parallel")
-library(parallel)
-install.packages("tidyverse")
-library(tidyverse)
-install.packages("knitr")
+```{r, include = FALSE}
+# instalacja (jeśli potrzeba) i załadowanie niezbędnych pakietów
+if (!require(knitr)) install.packages("knitr")
 library(knitr)
-install.packages("gridExtra")
+if (!require(tidyverse)) install.packages("tidyverse")
+library(tidyverse)
+if (!require(gridExtra)) install.packages("gridExtra")
 library(gridExtra)
-install.packages("psych")
+if (!require(psych)) install.packages("psych")
 library(psych)
-install.packages("ipred")
+if (!require(ipred)) install.packages("ipred")
 library(ipred)
-install.packages("rpart")
+if (!require(rpart)) install.packages("rpart")
 library(rpart)
-install.packages("rpart.plot")
+if (!require(rpart.plot)) install.packages("rpart.plot")
 library(rpart.plot)
+
+# szerokość wydruku
+options(width = 150)
 ```
 
 # Wstęp
-
 ## Opis problemu
-
 Celem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
 
 ## Baza danych
-
 Podstawą analizy jest baza danych klientów firmy pożyczkowej.
 
-```{r message=TRUE, warning=TRUE, paged.print=TRUE}
-# Wczytanie danych
-pozyczki <- read.csv("pozyczki.csv", na.strings = "")
-dane<-data.frame(pozyczki)
-head(dane[1:13],4)
+```{r}
+# wczytanie danych
+sciezka <- "/Users/czare/Desktop/Analiza Grupa C/pozyczki.csv"
+dane <- read.csv(sciezka)
+
+# wyświetlenie pierwszych wierszy danych
+kable(head(dane))
+```
+
+```{r}
+# wyświetlanie danych
 str(dane)
 ```
 
-# Czyszcznie danych
-
 ## Zmienne
+Zmienną objaśnianą jest zmienna `Loan_Status` określająca, czy danej osobie przyznano pożyczkę (Y/N).
+
+Zmienne objaśniające to głównie zmienne socjo-demograficzne oraz informacje finansowe.
 
 ```{r}
-# Nazwy zmiennych objaśniających
+# nazwy zmiennych objaśniających
 data.frame(zmienna = names(dane)[2:12])
-
 ```
+
+## Czyszczenie dancyh 
 
 Pierwsza kolumna w bazie danych (`Loan_ID`) określa numer identyfikacyjny, ją możemy pominąć.
 
 ```{r}
-# Usunięcie pierwszej kolumny i dodatnie kolumny pomocniczej
+# usunięcie pierwszej kolumny
 dane <- dane %>%
   select(-1)
-dane$TotalIncome <- rowSums(dane[, c("ApplicantIncome", "CoapplicantIncome")], na.rm = TRUE)
+```
+
+Mamy 614 obserwacji (klientów firmy) opisanych przez 12 zmiennych.
+
+## Dodanie kolumny pomocniczej 
+
+Dodanie kolumny Total income, która pokazuję dochód dwoch osób składających wniosek. Total income by one, pokazuję dochód całkowity dochód przeliczając na jedną osobę.
+
+```{r}
 dane <- dane %>%
-  mutate(ID = 1:n())
-
-
-
+  mutate(Total_income = (ApplicantIncome + CoapplicantIncome))
+dane <- dane %>%
+  mutate(Total_income_by_one = (ApplicantIncome + CoapplicantIncome)/2)
 ```
 
-#Walidacja danych
-```{r}
-#Walidacja danych
-rules <- validator(
-  ApplicantIncome + CoapplicantIncome == TotalIncome
-  , Gender %in% c("Male", "Female")
-  , Married %in% c("Yes", "No")
-  , Self_Employed %in% c("Yes", "No")
-  , Loan_Status %in% c("Y", "N")
-  , Credit_History %in% c("0", "1")
-  , LoanAmount >=0
-  , Loan_Amount_Term > 0
-  , ApplicantIncome >= 0
-)
-
-cf <- confront(dane, rules, key="ID")
-summary(cf)
-
-barplot(cf, main="dane")
-
-as.data.frame(cf) %>% head()
-
-```
-Po zwalidowaniu danych nie występują żadne błędy. Można jedynie zauważyć, że w niektórych zmiennych występują braki danych. 
-
-```{r}
-#Usunięcie wierszy zawierających NA 
-
-dane1 <- na.omit(dane)
-
-```
-
-Zdecydowaliśmy się na usunięcie wierszy zawierających braki (NA); braki występowały głównie w zmiennych jakościowych. Zastąpienie NA losowymi wartościami mogłoby negatywnie wpłynąć na wynik analizy.
-
-```{r}
-#Brakujące obserwacje 
-sum(is.na(dane1))
-```
-##Obserwacje odstające 
-```{r}
-boxplot(dane1$ApplicantIncome, main="Rozkład Wartości Przychodów Klientów")
-```
-
-```{r}
-boxplot(dane1$LoanAmount, main="Rozkład Wartości Wielkości Kwoty Pożyczki")
-```
-
-```{r}
-plot(dane1$LoanAmount)
-```
-
-```{r}
-boxplot(dane1$LoanAmount ~ dane1$Credit_History, main="Rozkład Wartości wysokości pożyczki w zależności od histori kredytowej'", xlab="Credit_History", ylab="LoanAmount")
-```
-
-```{r}
-boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
-```
-Wielkości całego przychodu dla większości zminnych są w przedziale <44000. Występuje natomiast jedna wartość odstająca, która nas niepokoi i może wplywać negatywnie na wynik analizy. Dla efektywniejszej analizy zdecydowaliśmy się usunąć zmienną odstającą, 
-ID = 410. 
-
-##Usunięcie zmiennej odstającej
-```{r}
-dane1 <- dane1[dane1$ID != 410, ]
-```
-
-```{r}
-boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
-```
-Po usunięciu odstającej zmiennej dane są bardziej spójne.
-
-```{r}
-dane <- dane1
-```
 
 # Wizaulizacja danych
 
@@ -441,7 +367,7 @@ ggplot(dane, aes(x = Loan_Amount_Term)) +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
 ## Wielkość pożyczki osób wykształconych ze względu na lokalizację
-```{r warning=FALSE}
+```{r, warning = FALSE}
 ggplot(dane, aes(x = Education, y = LoanAmount, fill = Property_Area)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Wielkość pożyczki osób wykształconych ze względu na lokalizację",
@@ -479,10 +405,10 @@ ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
 
 W kolejnym etapie projektu przeprowadzono analizę opisową danych z firm ubezpieczeniowych, wspartą odpowiednimi grafikami.
 
-Dokonano odpowiedniego dostosowania formatów zmiennych, uwzględniając ich skalę pomiarową oraz przyszłe zastosowanie. Ten proces ma na celu zapewnienie spójności i odpowiedniego reprezentowania danych, co umożliwi bardziej precyzyjną analizę oraz ułatwi przyszłe używanie tych informacji.
+Dokonano odpowiedniego dopasowania formatów zmiennych, aby uwzględnić ich skalę pomiarową oraz przyszłe zastosowanie. Celem tego procesu jest zapewnienie jednolitości danych oraz ich poprawnej reprezentacji, co umożliwi dokładniejszą analizę i ułatwi korzystanie z tych informacji w przyszłości.
 
 ```{r}
-dane$Gender<-factor(dane$Gender,ordered=TRUE)
+
 dane$Married<-factor(dane$Married,ordered=TRUE)
 dane$Dependents<-factor(dane$Dependents,ordered=TRUE)
 dane$Education<-factor(dane$Education,ordered=TRUE)
@@ -492,7 +418,7 @@ dane$Property_Area<-factor(dane$Property_Area)
 dane$Loan_Status<-factor(dane$Loan_Status)
 ```
 
-LoanStatus: YES, Statystyki opisowe dla ApplicantIncome i CoapplicantIncome
+## LoanStatus: YES, Statystyki opisowe dla ApplicantIncome i CoapplicantIncome
 
 ```{r}
 library(DT)
@@ -507,7 +433,11 @@ df_summary_yes <- data.frame(
 DT::datatable(df_summary_yes, rownames = FALSE, options = list(dom = 't', paging = FALSE))
 ```
 
-LoanStatus: no, Statystyki opisowe dla ApplicantIncome i CoapplicantIncome
+Tabela przedstawia statystyki opisowe dla dwóch zmiennych: ApplicantIncome (dochód wnioskodawcy) i CoapplicantIncome (dochód współmałżonka lub współmałżonki), dotyczące osób, które uzyskały pożyczkę.
+
+Możemy zauważyć różnice między dochodem wnioskodawcy (ApplicantIncome) a dochodem współmałżonka (CoapplicantIncome) w zakresie wartości minimalnych, maksymalnych, mediany, średniej oraz kwartyli (Q1 i Q3). Na przykład, mediana dochodu wnioskodawcy (3839.5) jest niższa niż mediana dochodu współmałżonka (1211.5), co sugeruje, że średni dochód wnioskodawcy jest wyższy niż średni dochód współmałżonka.
+
+##LoanStatus: NO, Statystyki opisowe dla ApplicantIncome i CoapplicantIncome
 
 ```{r}
 
@@ -520,11 +450,15 @@ df_summary_no <- data.frame(
 )
 DT::datatable(df_summary_no, rownames = FALSE, options = list(dom = 't', paging = FALSE))
 ```
+Tabela przedstawia statystyki opisowe dla dwóch zmiennych: ApplicantIncome (dochód wnioskodawcy) i CoapplicantIncome (dochód współmałżonka lub współmałżonki), dla osób, które nie uzyskały pożyczki.
 
-LoanStatus: yes, Statystyki opisowe ilośc występowań dla danej cechy
+Możemy zauważyć różnice między dochodem wnioskodawcy (ApplicantIncome) a dochodem współmałżonka (CoapplicantIncome) w zakresie wartości minimalnych, maksymalnych, mediany, średniej oraz kwartyli (Q1 i Q3). Na przykład, mediana dochodu wnioskodawcy (3867) jest niższa niż mediana dochodu współmałżonka (0), co sugeruje, że średni dochód wnioskodawcy jest wyższy niż średni dochód współmałżonka.
 
+##LoanStatus: YES, Statystyki opisowe ilość występowań dla danej cechy
 
 ```{r}
+
+
 yes_data1 <- dane[dane$Loan_Status == "Y", c("Married", "Education","Self_Employed","Credit_History")]
 
 married_freq <- table(yes_data1$Married)
@@ -544,9 +478,17 @@ df_summary_yes <- data.frame(
 
 DT::datatable(df_summary_yes, rownames = FALSE, options = list(dom = 't', paging = FALSE))
 ```
+Tabela przedstawia statystyki opisowe ilości wystąpień dla danej cechy w zależności od różnych zmiennych, gdzie LoanStatus przyjmuje wartość "YES".
 
-Opis tabeli..
+Większość osób, które uzyskały kredyt, jest zamężna. Ooznacza to, że osoby będące w związku małżeńskim mogą być bardziej skłonne do otrzymania pozytywnej decyzji o przyznaniu kredytu.
 
+Większość osób, które uzyskały kredyt, posiada wykształcenie na poziomie studiów wyższych. Może to sugerować, że osoby z wyższym wykształceniem są bardziej skłonne do otrzymania pozytywnej decyzji o przyznaniu kredytu.
+
+Większość osób, które uzyskały kredyt, nie pracuje na własny rachunek. To może sugerować, że osoby zatrudnione na etacie są częściej akceptowane do otrzymania kredytu niż osoby prowadzące własną działalność gospodarczą.
+
+Praktycznie wszystkie osoby, które uzyskały kredyt, mają pozytywną historię kredytową. To silne wskazanie na to, że pozytywna historia kredytowa jest kluczowym czynnikiem decydującym o przyznaniu kredytu.
+
+##LoanStatus: No, Statystyki opisowe: ilość występowań dla danej cechy
 
 ```{r}
 no_data1 <- dane[dane$Loan_Status == "N", c("Married", "Education","Self_Employed","Credit_History")]
@@ -568,33 +510,47 @@ df_summary_yes <- data.frame(
 
 DT::datatable(df_summary_yes, rownames = FALSE, options = list(dom = 't', paging = FALSE))
 ```
+Tabela przedstawia statystyki opisowe ilości wystąpień dla danej cechy w zależności od różnych zmiennych, gdzie LoanStatus przyjmuje wartość "NO".
 
-Opis tabeli...
+Zarówno osoby zamężne  jak i osoby niezamężne mają znaczną liczbę wystąpień w przypadku braku otrzymanego kredytu. Nie ma wyraźnej dominacji żadnej z tych grup wśród tych, którzy nie otrzymali kredytu.
 
-Macierze korelacji
+Większość osób, które nie otrzymały kredytu, posiada wykształcenie na poziomie studiów wyższych. To może sugerować, że posiadanie wyższego wykształcenia nie jest decydującym czynnikiem w przyznawaniu kredytu.
+
+Większość osób, które nie otrzymały kredytu, nie pracuje na własny rachunek. To sugeruje, że fakt bycia pracownikiem etatowym może być korzystniejszy w kontekście uzyskania kredytu.
+
+Wedug danych z tabeli iczba osób z negatywną historią kredytową jest wyższa. Może to wskazywać na to, że historia kredytowa ma wpływ na decyzję o przyznaniu kredytu, ale nie jest jedynym czynnikiem decydującym.
+
+
+##Macierze korelacji
 
 
 ```{r}
 library(corrplot)
-dane[, c(7:10)] <- lapply(dane[, c(7:10)], as.numeric)
-
-corr_matrix <- cor(dane[, c(7:10)])
-
+dane[, c(6:9)] <- lapply(dane[, c(6:9)], as.numeric, errors = "coerce")
+print(which(sapply(dane[, c(6:9)], class) != "numeric"))
+corr_matrix <- cor(dane[, c(6:9)], use = "complete.obs")
+corr_matrix
 corrplot(corr_matrix, method = "number", type = "upper", diag = FALSE)
-
 corrplot(corr_matrix, method = "color")
+
 ```
 
-Opis korelacji...
 
-Wykresy.....
+ApplicantIncome vs CoapplicantIncome: Współczynnik korelacji wynoszący -0.12 wskazuje na słabą ujemną korelację między dochodem wnioskodawcy (ApplicantIncome) a dochodem współmałżonka (CoapplicantIncome). Oznacza to, że gdy dochód wnioskodawcy rośnie, dochód współmałżonka maleje nieznacznie (i odwrotnie). Zmienne te są słabo ze sobą skorelowane.
+
+ApplicantIncome vs LoanAmount: Współczynnik korelacji wynoszący 0.54 wskazuje na umiarkowaną dodatnią korelację między dochodem wnioskodawcy (ApplicantIncome) a kwotą kredytu (LoanAmount). Oznacza to, że istnieje pewien pozytywny związek między dochodem wnioskodawcy a kwotą kredytu, co sugeruje, że osoby z wyższym dochodem mają tendencję do ubiegania się o wyższe kwoty kredytu.
+
+CoapplicantIncome vs LoanAmount: Współczynnik korelacji wynoszący 0.20 wskazuje na słabą dodatnią korelację między dochodem współmałżonka (CoapplicantIncome) a kwotą kredytu (LoanAmount). Oznacza to, że istnieje pewien pozytywny związek między dochodem współmałżonka a kwotą kredytu, jednak jest to słaba korelacja.
+
+Loan_Amount_Term vs pozostałe zmienne: Współczynniki korelacji między okresem kredytowania (Loan_Amount_Term) a pozostałymi zmiennymi są bliskie zeru (-0.02 do 0.05), co wskazuje na brak istotnej korelacji między długością kredytowania a dochodem wnioskodawcy, dochodem współmałżonka lub kwotą kredytu.
+
 
 ```{r}
 library(ggplot2)
-ggplot(data = dane, aes(x = Gender, fill = Loan_Status)) +
+ggplot(data = dane, aes(x = Education, fill = Loan_Status)) +
   geom_bar(position = "dodge", width = 0.7) +
-  labs(title = "Decyzja o przyznaniu kredytu ze względu na płeć",
-       x = "Płeć",
+  labs(title = "Decyzja o przyznaniu kredytu ze względu na wykształcenie",
+       x = "Liczba osób",
        y = "Liczba decyzji") +
   theme_minimal()
 ggplot(data = dane, aes(x = Property_Area, fill = Loan_Status)) +
@@ -605,19 +561,27 @@ ggplot(data = dane, aes(x = Property_Area, fill = Loan_Status)) +
   theme_minimal()
 ```
 
-Opis wykresów .....
+Według danych z wykresu powyżej, możemy stwierdzić, że na pozytywną decyzję o przyznaniu kredytu, największą i szansę, mają osoby posaidające wykształcenie.
+Możemy również stwierdizć, że największą szansę na otrzymanie kredytu mają osoby mieszkające w strefie półmiejskiej. Mniejsze szanse, na otrzymanie kredytu, utrzymujące się na zbliżonym poziomie, mają osoby zamieszkujące strefy wiejskie i stricte miejskie.
 
-Testowanie zależności między Loan_Status a Married 
+###Testowanie zależności między Loan_Status a Married 
 
 
 ```{r}
-# Testowanie zależności między Loan_Status a Married 
 
 tabela_kontyngencji_married <- table(dane$Loan_Status, dane$Married)
   
 test_fisher <- fisher.test(tabela_kontyngencji_married)
 print(test_fisher)
-```
 
-Opis testów ....
+
+
+```
+P-value wynosi 0.01302, czyli prawdopodobieństwo otrzymania wyników równie ekstremalnych jak obserwowane, gdyby prawdziwa była hipoteza zerowa. Wartość p-value jest mniejsza niż przyjęty poziom istotności 0.05, co sugeruje istotność statystyczną i odrzucenie hipotezy zerowej.
+
+Przedział ufności dla współczynnika odds ratio wynosi od 1.093839 do 2.532840. Oznacza to, że istnieje 95% pewności, że prawdziwy współczynnik odds ratio mieści się w tym przedziale.
+
+Podsumowując, wyniki testu Fisher's Exact Test sugerują istotną statystycznie zależność między zmiennymi Loan_Status a Married, przy czym osoby będące w związku małżeńskim mogą mieć różne szanse na otrzymanie kredytu w porównaniu do osób, które nie są zamężne.
+
+
 
