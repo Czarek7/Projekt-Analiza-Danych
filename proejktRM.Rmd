@@ -20,65 +20,130 @@ if (!require(rpart)) install.packages("rpart")
 library(rpart)
 if (!require(rpart.plot)) install.packages("rpart.plot")
 library(rpart.plot)
-
+if (!require(rpart.plot)) install.packages("ggplot2")
+library(ggplot2)
+if (!require(rpart.plot)) install.packages("validate")
+library(validate)
 # szerokość wydruku
 options(width = 150)
 ```
 
 # Wstęp
+
 ## Opis problemu
+
 Celem niniejszego opracowania jest budowa klasyfikatora, który pozwoli możliwie dokładnie przewidzieć decyzję dotyczącą przyznania pożyczki klientom pewnej firmy pożyczkowej.
 
 ## Baza danych
+
 Podstawą analizy jest baza danych klientów firmy pożyczkowej.
 
-```{r}
-# wczytanie danych
-sciezka <- "/Users/czare/Desktop/Analiza Grupa C/pozyczki.csv"
-dane <- read.csv(sciezka)
-
-# wyświetlenie pierwszych wierszy danych
-kable(head(dane))
-```
-
-```{r}
-# wyświetlanie danych
+```{r message=TRUE, warning=TRUE, paged.print=TRUE}
+# Wczytanie danych
+pozyczki <- read.csv("pozyczki.csv", na.strings = "")
+dane<-data.frame(pozyczki)
+head(dane[1:13],4)
 str(dane)
 ```
 
-## Zmienne
-Zmienną objaśnianą jest zmienna `Loan_Status` określająca, czy danej osobie przyznano pożyczkę (Y/N).
+# Czyszcznie danych
 
-Zmienne objaśniające to głównie zmienne socjo-demograficzne oraz informacje finansowe.
+## Zmienne
 
 ```{r}
-# nazwy zmiennych objaśniających
+# Nazwy zmiennych objaśniających
 data.frame(zmienna = names(dane)[2:12])
-```
 
-## Czyszczenie dancyh 
+```
 
 Pierwsza kolumna w bazie danych (`Loan_ID`) określa numer identyfikacyjny, ją możemy pominąć.
 
 ```{r}
-# usunięcie pierwszej kolumny
+# Usunięcie pierwszej kolumny i dodatnie kolumny pomocniczej
 dane <- dane %>%
   select(-1)
+dane$TotalIncome <- rowSums(dane[, c("ApplicantIncome", "CoapplicantIncome")], na.rm = TRUE)
+dane <- dane %>%
+  mutate(ID = 1:n())
+
+
+
 ```
 
-Mamy 614 obserwacji (klientów firmy) opisanych przez 12 zmiennych.
+#Walidacja danych
+```{r}
+#Walidacja danych
+rules <- validator(
+  ApplicantIncome + CoapplicantIncome == TotalIncome
+  , Gender %in% c("Male", "Female")
+  , Married %in% c("Yes", "No")
+  , Self_Employed %in% c("Yes", "No")
+  , Loan_Status %in% c("Y", "N")
+  , Credit_History %in% c("0", "1")
+  , LoanAmount >=0
+  , Loan_Amount_Term > 0
+  , ApplicantIncome >= 0
+)
 
-## Dodanie kolumny pomocniczej 
+cf <- confront(dane, rules, key="ID")
+summary(cf)
 
-Dodanie kolumny Total income, która pokazuję dochód dwoch osób składających wniosek. Total income by one, pokazuję dochód całkowity dochód przeliczając na jedną osobę.
+barplot(cf, main="dane")
+
+as.data.frame(cf) %>% head()
+
+```
+Po zwalidowaniu danych nie występują żadne błędy. Można jedynie zauważyć, że w niektórych zmiennych występują braki danych. 
 
 ```{r}
-dane <- dane %>%
-  mutate(Total_income = (ApplicantIncome + CoapplicantIncome))
-dane <- dane %>%
-  mutate(Total_income_by_one = (ApplicantIncome + CoapplicantIncome)/2)
+#Usunięcie wierszy zawierających NA 
+
+dane1 <- na.omit(dane)
+
 ```
 
+Zdecydowaliśmy się na usunięcie wierszy zawierających braki (NA); braki występowały głównie w zmiennych jakościowych. Zastąpienie NA losowymi wartościami mogłoby negatywnie wpłynąć na wynik analizy.
+
+```{r}
+#Brakujące obserwacje 
+sum(is.na(dane1))
+```
+##Obserwacje odstające 
+```{r}
+boxplot(dane1$ApplicantIncome, main="Rozkład Wartości Przychodów Klientów")
+```
+
+```{r}
+boxplot(dane1$LoanAmount, main="Rozkład Wartości Wielkości Kwoty Pożyczki")
+```
+
+```{r}
+plot(dane1$LoanAmount)
+```
+
+```{r}
+boxplot(dane1$LoanAmount ~ dane1$Credit_History, main="Rozkład Wartości wysokości pożyczki w zależności od histori kredytowej'", xlab="Credit_History", ylab="LoanAmount")
+```
+
+```{r}
+boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
+```
+Wielkości całego przychodu dla większości zminnych są w przedziale <44000. Występuje natomiast jedna wartość odstająca, która nas niepokoi i może wplywać negatywnie na wynik analizy. Dla efektywniejszej analizy zdecydowaliśmy się usunąć zmienną odstającą, 
+ID = 410. 
+
+##Usunięcie zmiennej odstającej
+```{r}
+dane1 <- dane1[dane1$ID != 410, ]
+```
+
+```{r}
+boxplot(dane1$TotalIncome ~ dane1$Loan_Status, main="Rozkład Wartości statusu uznania pozyczki do wielkości całego przychodu'", ylab="TotalIncome", xlab="Loan_Status")
+```
+Po usunięciu odstającej zmiennej dane są bardziej spójne.
+
+```{r}
+dane <- dane1
+```
 
 # Wizaulizacja danych
 
@@ -147,6 +212,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Małżeństwo",
        y = "%")
 ```
+Zdecydowana większość wnioskujących to osoby w związku małżeńskim.
 ```{r}
 filtered_data <- dane[dane$Loan_Status == "Y", ]
 
@@ -162,9 +228,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Małżeństwo",
        y = "%")
 ```
-
-
-
+Filtrując na osoby, które otrzymały pozytywną decyzję pożyczkowa dominują osoby w związu małżeńskim. Co ciekawe przy filtrze pozytywna decyzja pożyczkowa urósł procent udziału osób w związku małżeńskim co może znaczyć, że osoby z tym statusem z większym prawdopodobieństwem mogą otrzymać pożyczkę.
 
 ## Osoby na utrzymaniu
 
@@ -181,22 +245,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Oosby na utrzymaniu",
        y = "%")
 ```
-
-```{r}
-filtered_data <- dane[dane$Loan_Status == "Y", ]
-
-tab <- as.data.frame(100*prop.table(table(filtered_data$Dependents)))
-ggplot(tab, aes(x = Var1, y = Freq)) + 
-  geom_col(fill = "#FFFF99", colour = "black") +
-  geom_text(aes(label = paste0(round(Freq,1),"%")), 
-            stat = "identity", size = 3, 
-            fontface = "bold", position = position_stack(vjust = 0.5)) +
-  theme(axis.title.x = element_blank(), 
-        axis.text.x = element_text(colour = "black", size = 10),
-        plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Oosby na utrzymaniu",
-       y = "%")
-```
+Dominującą grupą są osoby, które poza sobą nie mają nikogo na utrzymaniu.
 
 ## Edukacja
 
@@ -213,6 +262,8 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Edukacja",
        y = "%")
 ```
+Jedynie co 5 wnioskujący nie posiada wykształcenia.
+
 ```{r}
 filtered_data <- dane[dane$Loan_Status == "Y", ]
 
@@ -228,6 +279,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Edukacja",
        y = "%")
 ```
+Udział osób nie wykształconych spada jęsli nałożymy filtr pozytywnej oceny kredytowej, co może sugerować, że takie sooby z mniejsyzm prawdopodobieństwem otrzymają pożyczkę.
 
 ## Samozatrudnienie
 
@@ -245,24 +297,6 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
        y = "%")
 ```
 
-
-```{r}
-filtered_data <- dane[dane$Loan_Status == "Y", ]
-
-tab <- as.data.frame(100*prop.table(table(filtered_data$Self_Employed)))
-ggplot(tab, aes(x = Var1, y = Freq)) + 
-  geom_col(fill = "#FFFF99", colour = "black") +
-  geom_text(aes(label = paste0(round(Freq, 1), "%")), 
-            stat = "identity", size = 4, 
-            fontface = "bold", position = position_stack(vjust = 0.5)) +
-  theme(axis.title.x = element_blank(), 
-        axis.text.x = element_text(colour = "black", size = 10),
-        plot.title = element_text(hjust = 0.5, size = 12)) +
-  labs(title = "Samozatrudnienie (Loan Status: Y)",
-       y = "%")
-
-```
-
 ## Historia kredytowa
 
 ```{r}
@@ -278,6 +312,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Historia kredytowa",
        y = "%")
 ```
+Jedynie 15% obserwacji nie miało historii kredytowej.
 
 ```{r}
 filtered_data <- dane[dane$Loan_Status == "Y", ]
@@ -294,7 +329,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Historia kredytowa",
        y = "%")
 ```
-
+Przy nałożeniu filtru pozytywna ocena zdolności, okazuję się, że zaledwie 1,8% otrzymało pożyczke pomimo braku historii pożyczkowej. Co może sugerować, że brak histori jest ogromna przeszkodą albo zablokowanie szans na pożyczkę.
 
 ## Lokalizacja 
 
@@ -311,6 +346,7 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Lokalizacja",
        y = "%")
 ```
+Rozkład miejsca zamieszkania jest prawie równy. Jednak najliczniejszą grupę stanowią osoby zamieszkujące tereny semiurbanizowane.
 
 ```{r}
 filtered_data <- dane[dane$Loan_Status == "Y", ]
@@ -327,11 +363,9 @@ ggplot(tab, aes(x = Var1, y = Freq)) +
   labs(title = "Lokalizacja",
        y = "%")
 ```
+Patrząc po osobach z pozytywna decyzją, dominuje grupa osób z terenów semiurbanizowanych.
 
-## Statystyki opisowe zminnych ilościowych
-```{r}
-kable(describe(dane[,6:9])[c(2:5,8,9,11,12)])
-```
+
 ## Dochód aplikanta
 
 ```{r, warning = FALSE}
@@ -342,6 +376,7 @@ ggplot(dane, aes(x = ApplicantIncome)) +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 
 ```
+Większość wnioskujących nie posiada dochodu większego niż 10 000 dolarów. Najliczniejsza grupa nie zarabia nawet 5 000 dolarów.
 ## Dochód współaplikanta
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = CoapplicantIncome)) + 
@@ -350,6 +385,8 @@ ggplot(dane, aes(x = CoapplicantIncome)) +
        x = "dollars", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
+Dochód współwnioskujących najczęściej wynosi 0, co ma swoje przełożenie na tym, że głównie składały osoby nie posiadające nikogo na utrzymaniu.
+
 ## Wartość pożyczki
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = LoanAmount)) + 
@@ -358,6 +395,7 @@ ggplot(dane, aes(x = LoanAmount)) +
        x = "dollars", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
+Za to wartość pożyczki rzadko kiedy przekraczała 200 dolarów.
 ## Okres pożyczkowania
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = Loan_Amount_Term)) + 
@@ -366,16 +404,7 @@ ggplot(dane, aes(x = Loan_Amount_Term)) +
        x = "months", y = "n") +
   theme(plot.title = element_text(hjust = 0.5, size = 12))
 ```
-## Wielkość pożyczki osób wykształconych ze względu na lokalizację
-```{r, warning = FALSE}
-ggplot(dane, aes(x = Education, y = LoanAmount, fill = Property_Area)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Wielkość pożyczki osób wykształconych ze względu na lokalizację",
-       x = "Edukacja",
-       y = "Wartość pożyczki",
-       fill = "Lokalizacja") +
-  theme_minimal()
-```
+Mała grupa osób wnioskowała o pożyczke z okresem płatności dłuższym niż 400 miesiecy.
 
 ## Wykres liniowy wartości pożyczki
 ```{r, warning = FALSE}
@@ -385,14 +414,9 @@ ggplot(dane, aes(x = seq_along(LoanAmount), y = LoanAmount)) +
   geom_line(color = "blue") +
   labs(title = "Wykres liniowy wartości pożyczki", x = "Numer obserwacji", y = "Warrtość pożyczki")
 ```
+Wykres ilustruję, że niecałe 20% wniosków stnoapiwły pożyczki o kwocie powyżej 200 dolarów i nie wynosiły więcej niż 600.
 
-## Wykres rozrzutu długości i wartości pożyczki
-```{r, warning = FALSE}
-ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term)) +
-  geom_point(color = "green") +
-  labs(title = "Wykres rozrzutu Loan Amount i Loan Terms", x = "Loan Amount", y = "Loan Terms")
-```
-## 
+## Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową
 
 ```{r, warning = FALSE}
 ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
@@ -401,7 +425,7 @@ ggplot(dane, aes(x = LoanAmount, y = Loan_Amount_Term, )) +
   labs(title = "Wykresy rozrzutu wartości i okresu trwania pożyczki z podziałem na deycję pożyczkową", x = "Wartość pożyczki", y = "Okres pożyczkowania")
 ```
 
-##Analiza opisowa
+## Analiza opisowa
 
 W kolejnym etapie projektu przeprowadzono analizę opisową danych z firm ubezpieczeniowych, wspartą odpowiednimi grafikami.
 
@@ -561,7 +585,7 @@ ggplot(data = dane, aes(x = Property_Area, fill = Loan_Status)) +
   theme_minimal()
 ```
 
-Według danych z wykresu powyżej, możemy stwierdzić, że na pozytywną decyzję o przyznaniu kredytu, największą i szansę, mają osoby posaidające wykształcenie.
+Według danych z wykresu powyżej, możemy stwierdzić, że na pozytywną decyzję o przyznaniu kredytu, największą i szansę, mają osoby posiadające wykształcenie.
 Możemy również stwierdizć, że największą szansę na otrzymanie kredytu mają osoby mieszkające w strefie półmiejskiej. Mniejsze szanse, na otrzymanie kredytu, utrzymujące się na zbliżonym poziomie, mają osoby zamieszkujące strefy wiejskie i stricte miejskie.
 
 ###Testowanie zależności między Loan_Status a Married 
@@ -583,5 +607,7 @@ Przedział ufności dla współczynnika odds ratio wynosi od 1.093839 do 2.53284
 
 Podsumowując, wyniki testu Fisher's Exact Test sugerują istotną statystycznie zależność między zmiennymi Loan_Status a Married, przy czym osoby będące w związku małżeńskim mogą mieć różne szanse na otrzymanie kredytu w porównaniu do osób, które nie są zamężne.
 
+# Wnioski i podsumowanie 
 
+Na podstawie dokonanej analizy można zauważyć, że analiza dancyh nie należy do najłatwiejszej dziedziny. Problem braku danych, zwłaszcza jakościowych z dwiemia możliwych odpowiedziami typu tak, nie jest istotnie utrudniającym pracę. Jednak ze względu na wąską grupę takich obserwacji zdecydowaliśmy się nie brać ich pod uwagę. Analiza osób, które pozytywnie przechodzą proces udzielania pożyczki jest skomplikownay i posiada wiele zmiennych. Na podstawie powyższej analizy można stwierdzić, że dla kandydata, który chciałby ubiegać się o pożyczke jest posiadanie historii pożyczkowej oraz wykształcenia. 
 
