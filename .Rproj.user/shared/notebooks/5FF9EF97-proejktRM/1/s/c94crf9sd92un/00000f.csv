@@ -1,0 +1,5 @@
+"0","dane <- dane %>% arrange(LoanAmount)"
+"0",""
+"0","ggplot(dane, aes(x = seq_along(LoanAmount), y = LoanAmount)) +"
+"0","  geom_line(color = ""blue"") +"
+"0","  labs(title = ""Wykres liniowy wartości pożyczki"", x = ""Numer obserwacji"", y = ""Warrtość pożyczki"")"

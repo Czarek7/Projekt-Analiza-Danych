@@ -1,0 +1,6 @@
+"0","ggplot(dane, aes(x = ApplicantIncome)) + "
+"0","  geom_histogram(colour = ""black"", fill = ""#FFFF99"", bins = 10) +"
+"0","  labs(title = ""Dochód aplikanta"", "
+"0","       x = ""dollars"", y = ""n"") +"
+"0","  theme(plot.title = element_text(hjust = 0.5, size = 12))"
+"0",""
